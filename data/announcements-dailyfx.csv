@@ -1,3 +1,4 @@
+time,currency,title,priority,actual,forecast,previous
 "2019-03-10T01:01:00","cny","CNY Aggregate Financing CNY (FEB)","Medium","703.0b","1300.0b","4640.0b"
 "2019-03-10T01:01:00","cny","CNY Money Supply M2 (YoY) (FEB)","Low","8.0%","8.40%","8.40%"
 "2019-03-10T01:05:00","cny","CNY New Yuan Loans CNY (FEB)","High","885.5b","950.0b","3230.0b"
