@@ -56,22 +56,31 @@ class OHLC:
 
 class Interval :
     
-    def __init__(self, delta=datetime.timedelta(seconds=1)):
+    def __init__(self, start, delta=datetime.timedelta(seconds=1)):
+        self.start = start
+        self.next = start + delta
         self.begin, self.end, self.delta, self.ohlc, self.hist = None, None, delta, None, []
 
     def update(self, dt, p, q):
-        if self.end is None or dt > self.end:
-            self.begin = Utils.roundDT(dt)
-            self.end = self.begin + self.delta
-            print(self.begin, self.end)
+        if dt < self.next:
+            if self.ohlc is None : self.ohlc = OHLC()
+            self.ohlc.update(self.start, p, q)
+        else:
+            self.next_start(dt)
             if self.ohlc is not None:
                 self.hist.append(self.ohlc)
             self.ohlc = OHLC()
-        self.ohlc.update(self.begin, p, q)
+            self.ohlc.update(self.start, p, q)
+
+    def next_start(self, dt):
+        while self.next < dt:
+            self.start = self.next
+            self.next = self.next + self.delta
+
 
 def readerV1(fname, startDT, stopDT, delta):
     
-    intvl = Interval(delta)
+    intvl = Interval(startDT, delta)
     with gzip.open(fname) as fr:
         for i, line in enumerate(fr):
             if i == 0 : 
@@ -82,18 +91,14 @@ def readerV1(fname, startDT, stopDT, delta):
                 if dt < startDT : continue
                 if dt > stopDT : break
                 intvl.update(data[0], data[1], data[2])
-    print(len(intvl.hist))
-    print(intvl.hist[0])
-    print(intvl.hist[1])
-    print(intvl.hist[2])
-    print(intvl.hist[-3])
-    print(intvl.hist[-2])
-    print(intvl.hist[-1])
+    for h in intvl.hist:
+        print(h)
+
 
 def main():
     fname="~/eod/tick/csv/UB.csv.gz" if len(sys.argv) == 1 else sys.argv[1]
     assert os.path.exists(fname)
-    readerV1(fname, Utils.DT(2018,1,2,6,0,0), Utils.DT(2018, 1, 2, 6, 3, 0), datetime.timedelta(seconds=30))
+    readerV1(fname, Utils.DT(2018,1,2,6,0,0), Utils.DT(2019, 3, 15, 7, 0, 0), datetime.timedelta(seconds=30))
 
 if __name__ == '__main__':
     main()
