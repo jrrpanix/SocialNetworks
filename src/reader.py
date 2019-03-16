@@ -15,7 +15,8 @@ def getDateTime(d, t):
         return datetime.datetime(2018,1,1)
     return datetime.datetime(int(dv[2]), int(dv[0]), int(dv[1]), h,m,s,us)
 
-def main():
+
+def readerV0():
     assert len(sys.argv) > 1
     fname = sys.argv[1]
     assert os.path.exists(fname)
@@ -41,6 +42,20 @@ def main():
                         p31 = True
                         break
             
+
+def readerV1():
+    assert len(sys.argv) > 1
+    fname = sys.argv[1]
+    assert os.path.exists(fname)
+    with gzip.open(fname) as fr:
+        for i, line in enumerate(fr):
+            if i == 0 : 
+                continue
+            else:
+                break
+
+def main():
+    readerV1()
 
 if __name__ == '__main__':
     main()
