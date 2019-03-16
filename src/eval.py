@@ -18,7 +18,7 @@ class OHLC:
         if self.ts is None : self.ts = self.ts0
 
     def __str__(self):
-        return ("%s,%f,%f,%f,%f,%d,%f") % (str(self.ts0),self.O, self.H, self.L, self.C, self.T, self.V)
+        return ("%s,%10.6f,%10.6f,%10.6f,%10.6f,%6d,%6d") % (str(self.ts0),self.O, self.H, self.L, self.C, self.T, int(self.V))
 
 
 class Utils:
@@ -26,7 +26,7 @@ class Utils:
     def DT(year, month, day, hour, minute, second):
         return datetime.datetime(year, month, day, hour, minute, second, 0)
 
-    def getDT(d, t, micros=True):
+    def getDT(d, t, micros=False):
         if "/" in d:
             dv = d.split("/")
             year, month, day = int(dv[2]), int(dv[0]), int(dv[1])
@@ -58,13 +58,20 @@ class ReadOHLC:
                 records.append(Utils.parse(line))
         return records
 
+def sortByMax(hist):
+    return sorted(hist, key = lambda x : x.H - x.L, reverse=True)
+
+
 def main():
     if len(sys.argv) < 2:
         print("Error : usage <ohlc_file.csv.gz>")
         quit()
     infile = sys.argv[1]
-    records = ReadOHLC.read(infile)
-    print(len(records))
+    hist = ReadOHLC.read(infile)
+    records = sortByMax(hist)
+    for i,r in enumerate(records):
+        print("%s, %10.6f, %10.6f" % (r, r.H - r.L, r.O - r.C))
+        if i > 20 : break
 
 if __name__ == '__main__':
     main()
