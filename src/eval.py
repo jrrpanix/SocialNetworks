@@ -3,6 +3,8 @@ import sys
 import os
 import binascii
 import datetime
+import matplotlib.pyplot as plt
+import numpy as np
 
 """
  Social Networks Class Project
@@ -61,6 +63,15 @@ class ReadOHLC:
 def sortByMax(hist):
     return sorted(hist, key = lambda x : x.H - x.L, reverse=True)
 
+def getRecords(hist, start, end):
+    rec = []
+    for h in hist:
+        if h.ts > end :
+            break
+        if h.ts >= start :
+            rec.append(h)
+    return rec
+
 
 def main():
     if len(sys.argv) < 2:
@@ -72,6 +83,14 @@ def main():
     for i,r in enumerate(records):
         print("%s, %10.6f, %10.6f" % (r, r.H - r.L, r.O - r.C))
         if i > 20 : break
+    recs = getRecords(hist, Utils.DT(2018, 2, 5, 0, 0, 0), Utils.DT(2018, 2 ,6, 0, 0,0))
+    
+    print(recs[0])
+    print(recs[-1])
+    px = [r.O for r in recs]
+    x = [i for i in range(len(px))]
+    plt.plot(x, px)
+    plt.show()
 
 if __name__ == '__main__':
     main()
