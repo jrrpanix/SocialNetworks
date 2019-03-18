@@ -1,0 +1,14 @@
+{
+    "manifest_version": 2
+    ,"version": "0.1"
+    ,"name": "DailyFX Scraper"
+
+    ,"author": "Jing"
+    ,"background": {
+        "scripts": ["collect.js"]
+        ,"persistent": false
+    }
+    ,"permissions": [
+        "downloads"
+    ]
+}

@@ -23,11 +23,12 @@ function format() {
 
 
 function download(arr, i) {
-    browser.downloads.download({
+    chrome.downloads.download({
         "url": arr[i]
-        , "filename": `dailyfx/${i}.html`
+        , "filename": `dailyfx1/${i}.html`
+        , "conflictAction": "overwrite"
         , "saveAs": false
-    }).then(function(){
+    }, function(){
         if(i+1 < arr.length){
             setTimeout(function(){
                 download(arr, i+1);
