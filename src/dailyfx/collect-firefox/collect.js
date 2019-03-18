@@ -28,7 +28,7 @@ function download(arr, i) {
         , "filename": `dailyfx/${i}.html`
         , "conflictAction": "overwrite"
         , "saveAs": false
-    }, function(){
+    }).then(function(){
         if(i+1 < arr.length){
             setTimeout(function(){
                 download(arr, i+1);
