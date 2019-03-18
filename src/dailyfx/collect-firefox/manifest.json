@@ -1,0 +1,19 @@
+{
+    "manifest_version": 2
+    ,"version": "0.1"
+    ,"name": "DailyFX Scraper"
+
+    ,"author": "Jing"
+    ,"applications": {
+        "gecko": {
+            "id": "dailyfxscraper@jing"
+        }
+    }
+
+    ,"permissions": [
+        "downloads"
+    ]
+    ,"background": {
+        "scripts": ["collect.js"]
+    }
+}
