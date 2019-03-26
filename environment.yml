@@ -1,0 +1,6 @@
+name: sn
+dependencies:
+  - python
+  - numpy
+  - matplotlib
+  - jupyter
