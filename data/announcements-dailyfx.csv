@@ -38266,7 +38266,7 @@ time,currency,title,priority,actual,forecast,previous
 "2014-09-17T08:30:00","gbp","GBP Average Weekly Earnings (3M/YoY) (JUL)","Medium","0.6%","0.5%","-0.1%"
 "2014-09-17T08:30:00","gbp","GBP Weekly Earnings ex Bonus (3M/YoY) (JUL)","Medium","0.7%","0.7%","0.7%"
 "2014-09-17T08:30:00","gbp","GBP ILO Unemployment Rate (3M) (JUL)","Medium","6.2%","6.3%","6.4%"
-"2014-09-17T08:30:00","gb{","GBP Employment Change (3M/3M) (JUL)","Medium","","","167K"
+"2014-09-17T08:30:00","gbp","GBP Employment Change (3M/3M) (JUL)","Medium","","","167K"
 "2014-09-17T09:00:00","eur","EUR Euro-Zone Construction Output s.a. (MoM) (JUL)","Low","0.0%","","-0.4%"
 "2014-09-17T09:00:00","eur","EUR Euro-Zone Construction Output w.d.a. (YoY) (JUL)","Low","0.4%","","-1.1%"
 "2014-09-17T09:00:00","eur","EUR Euro-Zone Consumer Price Index (MoM) (AUG)","Medium","0.1%","0.1%","-0.7%"
