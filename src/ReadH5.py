@@ -13,7 +13,8 @@ class ReadH5 :
 
     def findFile(self, symbol, date):
         def getdt(d,tz=self.tz) :
-            return tz.localize(datetime.datetime(int(d[0:4]), int(d[4:6]), int(d[6:8]),0,0,0))
+            #return tz.localize(datetime.datetime(int(d[0:4]), int(d[4:6]), int(d[6:8]),0,0,0))
+            return datetime.datetime(int(d[0:4]), int(d[4:6]), int(d[6:8]),0,0,0)
 
         for f in os.listdir(self.dataDir):
             if not symbol in f : continue
@@ -28,6 +29,7 @@ class ReadH5 :
             print("no data for this symbol:date %s:%s" % (symbol, date))
             return None
         return pd.read_hdf(os.path.join(self.dataDir, fname), 'table')
+
         
 
 #dname = "/Users/john/TickData/splits"

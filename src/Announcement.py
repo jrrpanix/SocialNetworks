@@ -7,7 +7,7 @@ import argparse
 import math
 from pytz import timezone
 
-TZ_Central = timezone("US/Central")
+#TZ_Central = timezone("US/Central")
 
 """
  This code attempts to filter down the announcements
@@ -16,12 +16,13 @@ TZ_Central = timezone("US/Central")
 
 class Announcement:
 
-    def __init__(self, infile=None):
+    def __init__(self, infile=None, tz=timezone("US/Central")):
         self.names=["dt", "currency", "description", "impact", "actual", "forecast", "previous"]
         self.usecols = [0,1,2,3,4,5,6]
         self.dtypes={'dt':'str','currency':'str','description':'str',
                      'impact':'str','actual':'str',
                      'forecast':'str', 'previous':'str'}
+        self.tz = tz
         if infile is not None:
             self.create(infile)
 
@@ -75,9 +76,6 @@ class Announcement:
             value = value.lower()
             return value
 
-        def updatetz(x):
-            return x.tz_convert('US/Central')
-
         df = pd.read_csv(infile, 
                          usecols=self.usecols,
                          header=None, 
@@ -85,8 +83,12 @@ class Announcement:
                          dtype=self.dtypes,
                          sep=",")
         df['dt'] = pd.to_datetime(df['dt'],format="%Y-%m-%dT%H:%M:%S")
-        df['dt'] = df.dt.dt.tz_localize('UTC').dt.tz_convert('US/Central')
-        #df['dt'] = df.dt.astimezone('US/Central')
+        #
+        # Note this is horrible and slow but its the only way
+        # i could figure out how to convert the times to the
+        # central time zene without carrying the timezone aware stuff
+        df['dt'] = df['dt'].apply(self.getLocalTime)
+
         df['actual'] = df['actual'].apply(clean)
         df['forecast'] = df['forecast'].apply(clean)
         df['previous'] = df['previous'].apply(clean)
@@ -112,6 +114,12 @@ class Announcement:
     def setImpactLevel(self, impact):
         if self.df is None : return None
         self.df=self.df[self.df['impact']=="High"]
+
+    def getLocalTime(self, dt):
+        t0 = self.tz.localize(dt)
+        t1 = self.tz.fromutc(dt)
+        return dt + (t1 - t0)
+
 
 ###################################
 # Local Functions for Testing
