@@ -5,6 +5,9 @@ import os
 import sys
 import argparse
 import math
+from pytz import timezone
+
+TZ_Central = timezone("US/Central")
 
 """
  This code attempts to filter down the announcements
@@ -70,6 +73,9 @@ class Announcement:
             value = value.lower()
             return value
 
+        def updatetz(x):
+            return x.tz_convert('US/Central')
+
         df = pd.read_csv(infile, 
                          usecols=self.usecols,
                          header=None, 
@@ -77,6 +83,7 @@ class Announcement:
                          dtype=self.dtypes,
                          sep=",")
         df['dt'] = pd.to_datetime(df['dt'],format="%Y-%m-%dT%H:%M:%S")
+        df['dt'] = df.dt.dt.tz_localize('UTC').dt.tz_convert('US/Central')
         df['actual'] = df['actual'].apply(clean)
         df['forecast'] = df['forecast'].apply(clean)
         df['previous'] = df['previous'].apply(clean)
@@ -112,6 +119,11 @@ if __name__ == '__main__':
     ann = Announcement()
     df=ann.create(infile)
     df=df[df['impact']=="High"]
-    EventList = SortEvents(df)
-    ShowTopEvents(EventList)
-    
+    showTop = False
+    if showTop :
+        EventList = SortEvents(df)
+        ShowTopEvents(EventList)
+    showEvent = True
+    if showEvent:
+        e0 = GetEvent(df, "changeinnonfarmpayrolls")
+        print(e0)
