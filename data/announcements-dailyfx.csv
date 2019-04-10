@@ -40675,4 +40675,4 @@
 "2019-03-15T17:00:00","usd","USD Baker Hughes U.S. Rig Count (MAR 15)","Medium","1026","","1027"
 "2019-03-15T20:00:00","usd","USD Net Long-term TIC Flows (JAN)","Medium","-$7.2b","","-$48.3b"
 "2019-03-15T20:00:00","usd","USD Total Net TIC Flows (JAN)","Low","-$143.7b","","-$113.5b"
-time,currency,title,priority,actual,forecast,previous
+
