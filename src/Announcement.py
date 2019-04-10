@@ -16,12 +16,14 @@ TZ_Central = timezone("US/Central")
 
 class Announcement:
 
-    def __init__(self):
+    def __init__(self, infile=None):
         self.names=["dt", "currency", "description", "impact", "actual", "forecast", "previous"]
         self.usecols = [0,1,2,3,4,5,6]
         self.dtypes={'dt':'str','currency':'str','description':'str',
                      'impact':'str','actual':'str',
                      'forecast':'str', 'previous':'str'}
+        if infile is not None:
+            self.create(infile)
 
     def create(self, infile):
 
@@ -84,13 +86,36 @@ class Announcement:
                          sep=",")
         df['dt'] = pd.to_datetime(df['dt'],format="%Y-%m-%dT%H:%M:%S")
         df['dt'] = df.dt.dt.tz_localize('UTC').dt.tz_convert('US/Central')
+        #df['dt'] = df.dt.astimezone('US/Central')
         df['actual'] = df['actual'].apply(clean)
         df['forecast'] = df['forecast'].apply(clean)
         df['previous'] = df['previous'].apply(clean)
         df['event'] = df['description'].apply(normalize)
         df = df[df['currency'] == 'usd']
+        self.df = df
         return df
 
+    def topEvents(self):
+        if self.df is None :return None
+        uv = sorted(self.df.event.unique())
+        eC={}
+        for i in range(len(uv)):
+            e =uv[i]
+            edf = self.df[self.df["event"]==e]
+            eC[e] = len(edf)
+        return sorted([(k,v) for k,v in eC.items()], key=lambda x: x[1], reverse=True)
+        
+    def eventdf(self, event):
+        if self.df is None : return None
+        return self.df[self.df["event"]==event]
+
+    def setImpactLevel(self, impact):
+        if self.df is None : return None
+        self.df=self.df[self.df['impact']=="High"]
+
+###################################
+# Local Functions for Testing
+###################################
 def ShowTopEvents(kv, N=50):
     for i,k in enumerate(kv):
         if k[1] < 3 : break
@@ -114,8 +139,7 @@ def CompareEvents(df, e0, e1):
     m0, m1 = e0['dt'].values, e1['dt'].values
     return np.where(m1 == m0)[0]
 
-if __name__ == '__main__':
-    infile = "../data/announcements-dailyfx.csv"
+def Test(infile):
     ann = Announcement()
     df=ann.create(infile)
     df=df[df['impact']=="High"]
@@ -127,3 +151,7 @@ if __name__ == '__main__':
     if showEvent:
         e0 = GetEvent(df, "changeinnonfarmpayrolls")
         print(e0)
+
+if __name__ == '__main__':
+    infile = "../data/announcements-dailyfx.csv"
+    Test(infile)
