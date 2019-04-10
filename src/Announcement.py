@@ -84,10 +84,12 @@ class Announcement:
         df = df[df['currency'] == 'usd']
         return df
 
-def ShowTopEvents(kv, N=25):
+def ShowTopEvents(kv, N=50):
     for i,k in enumerate(kv):
+        if k[1] < 3 : break
         print("%-60s, %3d" % (k[0], k[1]))
         if i > 0 and i > N : break
+
 
 def SortEvents(df):
     uv = sorted(df.event.unique())
