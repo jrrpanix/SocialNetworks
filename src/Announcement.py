@@ -6,6 +6,10 @@ import sys
 import argparse
 import math
 
+"""
+ This code attempts to filter down the announcements
+ to the basic core.
+"""
 
 class Announcement:
 
@@ -63,7 +67,7 @@ class Announcement:
                     break
             value=value.replace("-","")
             value=value.replace(".","")
-            #value = value.upper()
+            value = value.lower()
             return value
 
         df = pd.read_csv(infile, 
@@ -80,13 +84,32 @@ class Announcement:
         df = df[df['currency'] == 'usd']
         return df
 
-ann = Announcement()
-df=ann.create(infile = "/Users/john/SocialNetworks/data/announcements-dailyfx.csv")
-uv = sorted(df.event.unique())
-for i in range(len(uv)):
-    print(i, uv[i])
-#print(df.iloc[0:10])
+def ShowTopEvents(kv, N=25):
+    for i,k in enumerate(kv):
+        print("%-60s, %3d" % (k[0], k[1]))
+        if i > 0 and i > N : break
 
+def SortEvents(df):
+    uv = sorted(df.event.unique())
+    eC={}
+    for i in range(len(uv)):
+        e =uv[i]
+        edf = df[df["event"]==e]
+        eC[e] = len(edf)
+    return sorted([(k,v) for k,v in eC.items()], key=lambda x: x[1], reverse=True)
 
+def GetEvent(df, e):
+    return df[df["event"]==e]
 
+def CompareEvents(df, e0, e1):
+    m0, m1 = e0['dt'].values, e1['dt'].values
+    return np.where(m1 == m0)[0]
 
+if __name__ == '__main__':
+    infile = "../data/announcements-dailyfx.csv"
+    ann = Announcement()
+    df=ann.create(infile)
+    df=df[df['impact']=="High"]
+    EventList = SortEvents(df)
+    ShowTopEvents(EventList)
+    
