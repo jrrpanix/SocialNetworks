@@ -2,6 +2,12 @@ import h5py
 import numpy as np
 import pandas as pd
 import os
+import sys
+
+"""
+Convert CME Trade Tick Data to hdf5 files indexe by date-time
+Format allows for rapid read into pandas
+"""
 
 class ToHDF5:
 
@@ -25,9 +31,18 @@ class ToHDF5:
         base = os.path.basename(infile)
         outfile = os.path.join(outdir, base.split("_")[0] + "_" + mins + "_" + maxs + ".h5")
         df.to_hdf(outfile, 'table', table=True, complevel=9, complib='zlib', mode='w')
+        df = None
         return outfile
 
 
-name="/Users/john/TickData/gz/EC_2018_20190315.csv.gz"
-h5 = ToHDF5()
-h5.convert(name, "./")
+if __name__ == '__main__':
+
+    assert len(sys.argv) > 2
+    idir, odir = sys.argv[1], sys.argv[2]
+    h5 = ToHDF5()
+    for f in os.listdir(idir):
+        print("converting %s" % f)
+        sys.stdout.flush()
+        ofile = h5.convert(os.path.join(idir, f), odir)
+        print("created %s" % ofile)
+        sys.stdout.flush()
