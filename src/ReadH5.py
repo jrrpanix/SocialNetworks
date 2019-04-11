@@ -30,6 +30,6 @@ class ReadH5 :
                 print("no data for this symbol:date %s:%s" % (symbol, date))
             return None
         df =pd.read_hdf(os.path.join(self.dataDir, fname), 'table')
-        df.set_index('dt')
+        #df.set_index('dt', inplace=True)
         return df
         
