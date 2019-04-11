@@ -14,7 +14,8 @@ from ReadH5 import ReadH5
 
 class AnalyzeEvent:
 
-    def __init__(self, tickDir, announcementFile, event, symbol):
+    def __init__(self, tickDir, announcementFile, event, symbol, showLoadTimes=True):
+        self.showLoadTimes=showLoadTimes
         self.event = event
         self.symbol = symbol
         assert os.path.exists(tickDir)
@@ -33,17 +34,20 @@ class AnalyzeEvent:
     def run(self):
         for i in range(len(self.eventTimes)):
             date = self.eventTimes.iloc[i]["dt"]
-            if self.tickdf is not None and date < self.tickdf["dt"].max():
-                print("ok")
-                continue
+            data = self.getTickData(date)
+            if self.tickdf is not None:
+                print("Found data for %s %d" % (date, len(self.tickdf)))
+
+    def getTickData(self, date):
+        if self.tickdf is not None and date < self.tickdf["dt"].max():
+            return self.tickdf
+        else:
             t0 = time.time()
             self.tickdf = self.tickReader.readh5(self.symbol, date)
             t1 = time.time()
-            print("load time = %f" % (t1 - t0))
-            if self.tickdf is not None:
-                print("found", date, len(self.tickdf))
-
-        
+            if self.showLoadTimes and self.tickdf is not None:
+                print("TickData for date %s loaded in %f (sec)" % (date, (t1 - t0)))
+            return self.tickdf
 
 
 
