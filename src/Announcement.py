@@ -134,13 +134,15 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='SocialNetworks CSV to HDF5')
     parser.add_argument('-i','--input', help='specify input directory or input file', default="../data/announcements-dailyfx.csv")
     parser.add_argument('-o','--output', help='specify input directory or input file')
-    parser.add_argument('-5','--h5', help='hdf5 file', default=None)
+    parser.add_argument('-5','--h5', help='hdf5 input file to validate that output file created makes sense', default=None)
     args = parser.parse_args()
     inputFile, outputFile, h5File = args.input, args.output, args.h5
     if h5File is not None:
         df=pd.read_hdf(h5File, 'table')
         nfp=df[df["event"]=="changeinnonfarmpayrolls"]
-        print(nfp)
+        low=df[df["impact"]=="Low"]
+        high=df[df["impact"]=="High"]
+        print(len(nfp), len(low), len(high))
     else:
         assert os.path.exists(args.input)
         print("getting data from %s" % inputFile)
