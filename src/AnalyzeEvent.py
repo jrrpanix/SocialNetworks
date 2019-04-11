@@ -25,7 +25,7 @@ class EventStats :
 
 class AnalyzeEvent:
 
-    def __init__(self, tickDir, announcementFile, event, symbol, showLoadTimes=True, reportNoData=True):
+    def __init__(self, tickDir, announcementFile, event, symbol, window, showLoadTimes=True, reportNoData=True):
         self.showLoadTimes=showLoadTimes
         self.event = event
         self.symbol = symbol
@@ -33,6 +33,7 @@ class AnalyzeEvent:
         assert os.path.exists(announcementFile)
         self.tickReader = ReadH5(tickDir, reportNoData=reportNoData)
         self.announcements = pd.read_hdf(announcementFile, 'table')
+        self.window = window
         if len(self.announcements) == 0:
             print("No announcements found in file %s" % announcementFile)
             assert len(self.announcements) > 0
@@ -50,14 +51,17 @@ class AnalyzeEvent:
             date= eventData["dt"]
             data = self.getTickData(date)
             if self.tickdf is not None:
-                self.stats.append(self.getStats(data, date, eventData))
+                estats = self.getStats(data, date, eventData, self.window)
+                if estats is not None:
+                    self.stats.append(estats)
 
-    def getStats(self, data, date, eventData, Seconds=0, Minutes=30):
+    def getStats(self, data, date, eventData, Minutes, Seconds=0):
         t0 = time.time()
         dT = datetime.timedelta(seconds=Seconds, minutes=Minutes)
         before, after = date - dT , date + dT
         zone = data[data["dt"] > before]
         zone = zone[zone["dt"] < after]
+        if len(zone) == 0 : return None
         return EventStats(zone, eventData)
 
     def getTickData(self, date):
@@ -81,14 +85,15 @@ if __name__ == "__main__":
     parser.add_argument('-a','--announcementFile', help='announcement hdf5 file', default="../data/dailyfx.h5")
     parser.add_argument('-e','--event', help='event name', default="changeinnonfarmpayrolls")
     parser.add_argument('-s','--symbol', help='symbol ', default="ES")
+    parser.add_argument('-w','--window', help='window', default=30, type=int)
     args = parser.parse_args()
 
-    tickDir, announcementFile, event, symbol = args.tickDir, args.announcementFile, args.event, args.symbol
+    tickDir, announcementFile, event, symbol, window = args.tickDir, args.announcementFile, args.event, args.symbol, args.window
     assert os.path.exists(tickDir)
     assert os.path.exists(announcementFile)
     
     startTime = time.time()
-    analyze = AnalyzeEvent(tickDir, announcementFile, event, symbol, showLoadTimes=False, reportNoData=False)
+    analyze = AnalyzeEvent(tickDir, announcementFile, event, symbol, window, showLoadTimes=False, reportNoData=False)
     analyze.run()
     endTime = time.time()
     startDate, endDate, N, totalTime = None, None, len(analyze.stats), (endTime - startTime)
