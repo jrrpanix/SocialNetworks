@@ -86,7 +86,7 @@ class Announcement:
         #
         # Note this is horrible and slow but its the only way
         # i could figure out how to convert the times to the
-        # central time zene without carrying the timezone aware stuff
+        # central time zone without carrying the timezone aware stuff
         df['dt'] = df['dt'].apply(self.getLocalTime)
 
         df['actual'] = df['actual'].apply(clean)
@@ -111,55 +111,40 @@ class Announcement:
         if self.df is None : return None
         return self.df[self.df["event"]==event]
 
-    def setImpactLevel(self, impact):
+    def setImpactLevel(self, impact="High"):
         if self.df is None : return None
-        self.df=self.df[self.df['impact']=="High"]
+        self.df=self.df[self.df['impact']==impact]
 
     def getLocalTime(self, dt):
         t0 = self.tz.localize(dt)
         t1 = self.tz.fromutc(dt)
         return dt + (t1 - t0)
 
+    def save(self, outputFile):
+        self.df.to_hdf(outputFile, 'table', table=True, complevel=9, complib='zlib', mode='w')
+
 
 ###################################
 # Local Functions for Testing
 ###################################
-def ShowTopEvents(kv, N=50):
-    for i,k in enumerate(kv):
-        if k[1] < 3 : break
-        print("%-60s, %3d" % (k[0], k[1]))
-        if i > 0 and i > N : break
 
 
-def SortEvents(df):
-    uv = sorted(df.event.unique())
-    eC={}
-    for i in range(len(uv)):
-        e =uv[i]
-        edf = df[df["event"]==e]
-        eC[e] = len(edf)
-    return sorted([(k,v) for k,v in eC.items()], key=lambda x: x[1], reverse=True)
-
-def GetEvent(df, e):
-    return df[df["event"]==e]
-
-def CompareEvents(df, e0, e1):
-    m0, m1 = e0['dt'].values, e1['dt'].values
-    return np.where(m1 == m0)[0]
-
-def Test(infile):
-    ann = Announcement()
-    df=ann.create(infile)
-    df=df[df['impact']=="High"]
-    showTop = False
-    if showTop :
-        EventList = SortEvents(df)
-        ShowTopEvents(EventList)
-    showEvent = True
-    if showEvent:
-        e0 = GetEvent(df, "changeinnonfarmpayrolls")
-        print(e0)
 
 if __name__ == '__main__':
-    infile = "../data/announcements-dailyfx.csv"
-    Test(infile)
+    parser = argparse.ArgumentParser(description='SocialNetworks CSV to HDF5')
+    parser.add_argument('-i','--input', help='specify input directory or input file', default="../data/announcements-dailyfx.csv")
+    parser.add_argument('-o','--output', help='specify input directory or input file')
+    parser.add_argument('-5','--h5', help='hdf5 file', default=None)
+    args = parser.parse_args()
+    inputFile, outputFile, h5File = args.input, args.output, args.h5
+    if h5File is not None:
+        df=pd.read_hdf(h5File, 'table')
+        nfp=df[df["event"]=="changeinnonfarmpayrolls"]
+        print(nfp)
+    else:
+        assert os.path.exists(args.input)
+        print("getting data from %s" % inputFile)
+        announcementData = Announcement(infile=inputFile)
+        announcementData.save(outputFile)
+        print("saved filed %s" % outputFile)
+
