@@ -7,7 +7,7 @@ import os
 
 class OHLC:
 
-    def __init__(self, D, O, H, L, C, N, V, B, A, T):
+    def __init__(self, D, O, H, L, C, N, V, B, A, T, Forecast=None,Prev=None,Act=None):
         self.D = D # event Date Time 
         self.O = O # open
         self.H = H # high
@@ -21,6 +21,9 @@ class OHLC:
         self.range = H - L
         self.ticks = self.range/T
         self.R = (C - O)/O # interval return
+        self.Forecast = Forecast
+        self.Prev = Prev
+        self.Act = Act
 
 
 class ComputeOHLC :
@@ -44,7 +47,7 @@ class ComputeOHLC :
         return OHLC(date, O, H, L, C, ie - ib + 1, V, secBefore, secAfter, T)
  
 
-def Test(ddir, fname, T=1.0/32, B=60, A=60, H=13, M=0, S=0):
+def Test(ddir, fname, T=1.0/32, B=900, A=900, H=7, M=30, S=0):
     df =pd.read_hdf(os.path.join(ddir, fname), 'table')
     dmin, dmax = df.dt.min(), df.dt.max()
     start = datetime.datetime(dmin.year, dmin.month, dmin.day, H, M, S)
