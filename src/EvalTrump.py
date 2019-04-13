@@ -145,6 +145,8 @@ class EvalTweetStats:
         
 
     def showOutlier(self, df, s, tol=7):
+        print("%19s %7s %6s %10s %6s %10s %7s" % ("TweetTime", "MktAvg", "Trump", "Trump", "Before", "Before", "Diff"))
+        print("%19s %7s %6s %10s %6s %10s %7s" % ("", "Ticks", "Ticks", "Return", "Ticks", "Return", "Ticks"))
         for i in range(len(df)):
             r = df.iloc[i]
             if r["tweet_T"] - r["before_T"] > tol and r["before_T"] < s:
