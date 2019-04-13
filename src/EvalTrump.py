@@ -4,6 +4,8 @@ import os
 import sys
 import argparse
 import datetime
+import matplotlib.pyplot as plt
+
 
 from ReadH5 import ReadH5
 from Twitter import Twitter
@@ -114,19 +116,44 @@ class EvalTweetStats:
                               header=0,
                               sep=",")
         df=self.df
+
+        """
         tgt0 = len(df[df["tweet_R"] > 0])
         tlt0 = len(df[df["tweet_R"] < 0])
         bgt0 = len(df[df["before_R"] > 0])
         blt0 = len(df[df["before_R"] < 0])
-        print(df["tweet_T"].max(), df["tweet_T"].std(), df["tweet_T"].mean(), df["tweet_R"].mean(),df["tweet_R"].min(),df["tweet_R"].max(),df["tweet_R"].std(),tgt0, tlt0, len(df))
-        print(df["before_T"].max(), df["before_T"].std(), df["before_T"].mean(), df["before_R"].mean(),df["before_R"].min(),df["before_R"].max(),df["before_R"].std(),bgt0, blt0, len(df))
+        print( "%-14s %12s %12s" %( " ", "Before", "After"))
+        print( "%-14s %12.4f %12.4f" %( "Ticks MAX", df["before_T"].max(), df["tweet_T"].max()))
+        print( "%-14s %12.4f %12.4f" %( "Ticks MEAN", df["before_T"].mean(), df["tweet_T"].mean()))
+        print( "%-14s %12.4f %12.4f" %( "Ticks STD", df["before_T"].std(), df["tweet_T"].std()))
+        print( "%-14s %12.7f %12.7f" %( "RET MEAN", df["before_R"].mean(), df["tweet_R"].mean()))
+        print( "%-14s %12.7f %12.7f" %( "RET MIN", df["before_R"].min(), df["tweet_R"].min()))
+        print( "%-14s %12.7f %12.7f" %( "RET MAX", df["before_R"].max(), df["tweet_R"].max()))
+        print( "%-14s %12.7f %12.7f" %( "RET STD", df["before_R"].std(), df["tweet_R"].std()))
+        print( "%-14s %12.2f %12.2f" %( "VOLUME", df["before_V"].mean(), df["tweet_V"].mean()))
+        """
+        self.outT = [] # array to hold outlier tweet returns
+        self.outB = [] # array to hold before outlier tweet retruns
+        self.showOutlier(df, df["before_T"].std(), tol=2*df["before_T"].std())
 
-    def showOutlier(self, df):
+        oT = np.array(self.outT)
+        bT = np.array(self.outB)
+        m, s = df["tweet_R"].mean(),df["tweet_R"].std()
+        print ("%8.4f %8.4f %8.4f %8.4f %8.4f %8.4f %8.4f" % (m, s, np.mean(oT), np.std(oT), np.mean(bT), np.std(bT), np.corrcoef(oT, bT)[0,1]))
+        plt.scatter(bT, oT)
+        plt.show()
+        
+
+    def showOutlier(self, df, s, tol=7):
         for i in range(len(df)):
             r = df.iloc[i]
-            if abs(r["tweet_T"] - r["before_T"]) > 5:
-                dx = r["tweet_T"] - r["before_T"]
-                print(r["tweet_time"], r["tweet_T"] ,r["before_T"], dx)
+            if r["tweet_T"] - r["before_T"] > tol and r["before_T"] < s:
+            #if r["before_T"] - r["tweet_T"] > tol and r["tweet_T"] < s:
+                delta = r["tweet_T"] - r["before_T"]
+                self.outT.append(r["tweet_R"])
+                self.outB.append(r["before_R"])
+                print("%s %7.2f %6.0f %10.7f %6.0f %10.7f %7.2f" % 
+                      (str(r["tweet_time"]), s, float(r["tweet_T"]) , float(r["tweet_R"]), float(r["before_T"]) , float(r["before_R"]), float(delta)))
         
 
 if __name__ == "__main__":
