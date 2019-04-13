@@ -9,6 +9,8 @@ class OHLC:
 
     def __init__(self, D, O, H, L, C, N, V, B, A, T, Forecast=None,Prev=None,Act=None):
         self.D = D # event Date Time 
+        self.beginD = D - datetime.timedelta(seconds=B)
+        self.endD = D + datetime.timedelta(seconds=A)
         self.O = O # open
         self.H = H # high
         self.L = L # low
@@ -35,6 +37,7 @@ class ComputeOHLC :
     # T = ticksize (NQ,ES = 0.25, UB,UB = 1/32, TU, FV, TY = 1/64)
     def calc(df, date, secBefore, secAfter, T):
         datesV = df.dt.values
+        delta = datetime.timedelta(seconds=10)
         before = date - datetime.timedelta(seconds=secBefore)
         after  = date + datetime.timedelta(seconds=secAfter)
         ib, ia = bisect.bisect_left(datesV, np.datetime64(before)),bisect.bisect_right(datesV, np.datetime64(after)) 
