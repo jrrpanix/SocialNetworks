@@ -1,7 +1,6 @@
 # SocialNetworks
 SocialNetworksProject
 
-# Setting up the enviornment
 1) Copy the .h5 files on the shared drive in the folder to some folder on your host
 The shared folder name is called splits, assume you copy this to ~/splits
 2) Plot some sample data
