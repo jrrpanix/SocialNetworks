@@ -2,10 +2,8 @@
 SocialNetworksProject
 
 # Setting up the enviornment
-
 1) Copy the .h5 files on the shared drive in the folder to some folder on your host
 The shared folder name is called splits, assume you copy this to ~/splits
-
 2) Plot some sample data
 In the ./src directory there is a python program called PlotTickData.py, to plot some data
 
@@ -32,7 +30,7 @@ after = dt + datetime.timedelta(minutes=120)
 
 then you can shrink the dataframe df by the following commands
 
- df = df[df["dt"] > before]
- df = df[df["dt"] < after]
+df = df[df["dt"] > before]
+df = df[df["dt"] < after]
  
  
