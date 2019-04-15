@@ -1,4 +1,5 @@
 import datetime
+import numpy as np
 
 class Utils:
     
@@ -22,8 +23,15 @@ class Utils:
     def fmt(i=0,f=["%Y%m%d","%m-%d-%Y %H:%M:%S","%m-%d-%YT%H:%M:%S.%f","%Y%m%d %H%M%S"]):
         return f[i]
 
-    def dt(dstr,i=0,f=None):
+    def dt(dstr,i=0,f=None,np64=False):
         f = f if f is not None else Utils.fmt(i)
-        return datetime.datetime.strptime(dstr, f)
+        dt=datetime.datetime.strptime(dstr, f)
+        if np64:
+            return np.datetime64(dt)
+        return dt
 
-
+    def todt(date):
+        if type(date) == datetime.datetime : return date
+        ts = (date - np.datetime64('1970-01-01T00:00:00Z')) / np.timedelta64(1, 's')
+        return datetime.datetime.utcfromtimestamp(ts)
+        

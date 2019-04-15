@@ -3,6 +3,8 @@ import os
 import datetime
 import pytz
 import time
+import numpy as np
+from Utils import Utils
 
 class ReadH5 :
 
@@ -14,18 +16,18 @@ class ReadH5 :
         self.df = None
 
     def findFile(self, symbol, date):
-        def getdt(d,tz=self.tz) :
-            return datetime.datetime(int(d[0:4]), int(d[4:6]), int(d[6:8]),0,0,0)
-
         for f in os.listdir(self.dataDir):
-            if not symbol in f : continue
-            d0, d1 = getdt(f.split("_")[1]), getdt(f.split("_")[2])
+            base, ext = os.path.splitext(f)
+            if not symbol in base or len(base.split("_")) < 3: continue
+            d0, d1 = Utils.dt(base.split("_")[1]), Utils.dt(base.split("_")[2])
+            date = Utils.todt(date)
             if date >= d0 and date <= d1: return f
         return None
             
 
     def readh5(self, symbol, date):
         if self.df is not None:
+            date = Utils.todt(date)
             if date > self.start_date and date < self.end_date :
                 return self.df
         fname = self.findFile(symbol, date)

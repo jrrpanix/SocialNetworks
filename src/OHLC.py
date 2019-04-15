@@ -3,6 +3,7 @@ import numpy as np
 import datetime
 import bisect
 import os
+from Utils import Utils
 
 
 class OHLC:
@@ -20,8 +21,8 @@ class OHLC:
         self.B = B # seconds before D
         self.A = A # seconds after D
         self.T = T # Tick Size
-        self.range = H - L
-        self.ticks = self.range/T
+        self.Range = H - L
+        self.Ticks = self.Range/T
         self.R = (C - O)/O # interval return
         self.Forecast = Forecast
         self.Prev = Prev
@@ -36,6 +37,8 @@ class ComputeOHLC :
     # secAfter - window end
     # T = ticksize (NQ,ES = 0.25, UB,UB = 1/32, TU, FV, TY = 1/64)
     def calc(df, date, secBefore, secAfter, T):
+        if not type(date) == datetime.datetime:
+            date = Utils.todt(date)
         datesV = df.dt.values
         delta = datetime.timedelta(seconds=10)
         before = date - datetime.timedelta(seconds=secBefore)
@@ -60,7 +63,7 @@ def Test(ddir, fname, T=1.0/32, B=900, A=900, H=7, M=30, S=0):
         if start.weekday() < 5:
             oh = ComputeOHLC.calc(df, start, B, A, T)
             if oh is not None:
-                print("%s %6.0f" % (oh.D, oh.ticks))
+                print("%s %6.0f" % (oh.D, oh.Ticks))
         start = start + datetime.timedelta(days=1)
         if start > dmax : break
 
