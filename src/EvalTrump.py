@@ -12,18 +12,7 @@ from Twitter import Twitter
 from OHLC import OHLC
 from OHLC import ComputeOHLC
 from Announcement import Announcement
-
-def getTickSize(symbol):
-    if symbol in ["ES", "NQ"] : return 0.25
-    if symbol in ["US", "UB"] : return 1/32.0
-    if symbol in ["FV", "TY"] : return 1/64.0
-    if symbol in ["TU"] : return 1/128.0
-    if symbol in ["EC"] : return 0.00005
-    assert False, "Future %s not in Split Directory" % symbol
-
-
-def getDT(d):
-    return datetime.datetime(int(d[0:4]), int(d[4:6]), int(d[6:8]))
+from Utils import Utils
 
 class GenerateTweetStats:
 
@@ -32,9 +21,9 @@ class GenerateTweetStats:
         self.before = before
         self.after = after
         self.bmult = bmult
-        self.startDate = getDT(startDate) if startDate is not None else None
-        self.endDate = getDT(endDate) if endDate is not None else None
-        self.TickSize = getTickSize(symbol)
+        self.startDate = Utils.dt(startDate) if startDate is not None else None
+        self.endDate = Utils.dt(endDate) if endDate is not None else None
+        self.TickSize = Utils.tickSize(symbol)
         self.TwitterInfo = Twitter(twitterFile)
         self.h5Reader  = ReadH5(dataDir, reportNoData=False)
         self.wfd = open(args.output, "w")
@@ -165,7 +154,7 @@ if __name__ == "__main__":
     defaultFile="../data/trump_twitter.csv"
     parser = argparse.ArgumentParser(description='SocialNetworks: Analyze Trump')
     parser.add_argument('-t','--twitterFile', help='twitter csv file', default=defaultFile)
-    parser.add_argument('-d','--dataDir', help='specify tick data directory', default= "/Users/john/TickData/splits")
+    parser.add_argument('-d','--dataDir', help='specify tick data directory', default= os.path.join(os.getenv("HOME"),"TickData/splits"))
     parser.add_argument('-s','--symbol', help='symbol ', default="ES")
     parser.add_argument('-b','--before', help='before window seconds ', default=60, type=int)
     parser.add_argument('-a','--after', help='after window seconds', default=600*3, type=int)
@@ -182,6 +171,6 @@ if __name__ == "__main__":
     else:
         twitterFile, dataDir, symbol, before, after, output, bmult = args.twitterFile, args.dataDir, args.symbol, args.before, args.after, args.output, args.bmult
         startDate, endDate = args.start, args.end
-        assert os.path.exists(twitterFile) 
-        assert os.path.exists(dataDir)
+        assert os.path.exists(twitterFile), "tweet file %s not found " % twitterFile
+        assert os.path.exists(dataDir), "Tick data directory  %s does not exist, ususally in TickData/splits" % dataDir
         GenerateTweetStats(output, twitterFile, dataDir, symbol, before, after, bmult, startDate, endDate)
