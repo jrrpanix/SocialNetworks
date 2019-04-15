@@ -8,7 +8,7 @@ from Utils import Utils
 
 class OHLC:
 
-    def __init__(self, D, O, H, L, C, N, V, B, A, T, Forecast=None,Prev=None,Act=None):
+    def __init__(self, D, O, H, L, C, N, V, B, A, TickSize, TickValue=None,Forecast=None,Prev=None,Act=None):
         self.D = D # event Date Time 
         self.beginD = D - datetime.timedelta(seconds=B)
         self.endD = D + datetime.timedelta(seconds=A)
@@ -20,9 +20,12 @@ class OHLC:
         self.V = V # trade volume
         self.B = B # seconds before D
         self.A = A # seconds after D
-        self.T = T # Tick Size
-        self.Range = H - L
-        self.Ticks = self.Range/T
+        self.TickSize = TickSize # Tick Size
+        self.TickValue = TickValue # Value of a Tick
+        self.Range = H - L # Absolute Price Movement
+        self.T = self.Range/TickSize # Movement in Ticks
+        self.CD = self.T * self.TickValue if self.TickValue is not None else 0
+        self.TD = self.CD * self.V if self.CD is not None else 0
         self.R = (C - O)/O # interval return
         self.Forecast = Forecast
         self.Prev = Prev
@@ -36,7 +39,7 @@ class ComputeOHLC :
     # secBefore - window start
     # secAfter - window end
     # T = ticksize (NQ,ES = 0.25, UB,UB = 1/32, TU, FV, TY = 1/64)
-    def calc(df, date, secBefore, secAfter, T):
+    def calc(df, date, secBefore, secAfter, TickSize, TickValue=None,actual=None,forecast=None,previous=None):
         if not type(date) == datetime.datetime:
             date = Utils.todt(date)
         datesV = df.dt.values
@@ -50,10 +53,10 @@ class ComputeOHLC :
         O, C = df.iloc[ib-1]["price"], df.iloc[ia]["price"]
         V= df.iloc[ib-1:ie]["qty"].sum()
         L, H= df.iloc[ib-1:ie]["price"].min(),df.iloc[ib-1:ie]["price"].max()
-        return OHLC(date, O, H, L, C, ie - ib + 1, V, secBefore, secAfter, T)
+        return OHLC(date, O, H, L, C, ie - ib + 1, V, secBefore, secAfter, TickSize, TickValue,forecast, previous, actual)
  
 
-def Test(ddir, fname, T=1.0/32, B=900, A=900, H=7, M=30, S=0):
+def Test(ddir, fname, TickSize=1.0/32, B=900, A=900, H=7, M=30, S=0):
     df =pd.read_hdf(os.path.join(ddir, fname), 'table')
     dmin, dmax = df.dt.min(), df.dt.max()
     start = datetime.datetime(dmin.year, dmin.month, dmin.day, H, M, S)
@@ -61,7 +64,7 @@ def Test(ddir, fname, T=1.0/32, B=900, A=900, H=7, M=30, S=0):
         start = start + datetime.timedelta(days=1)
     for i in range(500):
         if start.weekday() < 5:
-            oh = ComputeOHLC.calc(df, start, B, A, T)
+            oh = ComputeOHLC.calc(df, start, B, A, TickSize)
             if oh is not None:
                 print("%s %6.0f" % (oh.D, oh.Ticks))
         start = start + datetime.timedelta(days=1)

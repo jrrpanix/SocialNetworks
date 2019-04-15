@@ -8,45 +8,76 @@ from OHLC import ComputeOHLC
 from ReadH5 import ReadH5
 from Utils import Utils
 
+class EvalData:
+
+    def __init__(self):
+        self.header="event,date,beginD,endD,O,H,L,C,R,T,V,N,CD,TD,F,P,A,pre_date,pre_R,pre_T,pre_V"
+        self.dd={h:[] for h in self.header.split(",")}
+        self.df=None
+
+    def todf(self):
+        self.df=pd.DataFrame(data=self.dd)        
+        return self.df
+
+    def update(self, o, p, event=""):
+        self.dd["event"].append(event)
+        self.dd["date"].append(o.D)
+        self.dd["beginD"].append(o.beginD)
+        self.dd["endD"].append(o.endD)
+        self.dd["O"].append(o.O)
+        self.dd["H"].append(o.H)
+        self.dd["L"].append(o.L)
+        self.dd["C"].append(o.C)
+        self.dd["R"].append(o.R)
+        self.dd["T"].append(o.T)
+        self.dd["V"].append(o.V)
+        self.dd["N"].append(o.N)
+        self.dd["CD"].append(o.CD)
+        self.dd["TD"].append(o.TD)
+        self.dd["F"].append(o.Forecast)
+        self.dd["P"].append(o.Prev)
+        self.dd["A"].append(o.Act)
+        self.dd["pre_date"].append(p.D)
+        self.dd["pre_R"].append(p.R)
+        self.dd["pre_T"].append(p.T)
+        self.dd["pre_V"].append(p.V)
+
+
 class EvalDates:
 
-    def __init__(self, dataDir, dates, event, symbol, before, after, outdir, pre):
+    def __init__(self, dataDir, symbol, before, after, pre):
         self.reader = ReadH5(dataDir, reportNoData=False)
-        self.dates = dates
-        self.event = event
         self.symbol = symbol
         self.before = before
         self.after = after
         self.pre = pre
-        self.outdir = outdir
+        self.dd = EvalData()
         self.TickSize = Utils.tickSize(symbol)
         self.TickValue = Utils.tickValue(symbol)
-        self.outstr = "{}_{}_{}_{}_pre_{}".format(symbol, before, after, event, pre)
-        self.run()
-        print("Eval Complete output file %s" % self.outfile)
 
-    def run(self):
-        self.outfile = os.path.join(self.outdir, "{}.{}".format(self.outstr,"csv"))
-        fd=open(self.outfile, "w")
-        header="date,beginD,endD,O,H,L,C,R,T,V,N,$C,pre_date,pre_R,pre_T,pre_V"
-        fd.write( "%s\n" % header)
-        for date in self.dates:
+    def run(self, event, dates, actual=None, forecast=None, previous=None):
+        for i,date in enumerate(dates):
             tickdf = self.reader.readh5(self.symbol, date)
             if tickdf is not None:
                 preT = Utils.todt(date) - datetime.timedelta(seconds=pre)
-                p = ComputeOHLC.calc(tickdf, preT, self.before, self.after, self.TickSize)
-                o = ComputeOHLC.calc(tickdf, date, self.before, self.after, self.TickSize)
-                cDollars = ((o.H - o.L)/self.TickSize)*self.TickValue
-                fd.write("%s,%s,%s%f,%f,%f,%f,%f,%f,%f,%f,%f,%s,%f,%f,%f\n" %
-                         (o.D, o.beginD, o.endD, o.O, o.H, o.L, o.C, o.R, o.Ticks, o.V, o.N, cDollars, p.D, p.R, p.T, p.V))
-        fd.close()
+                p = ComputeOHLC.calc(tickdf, preT, self.before, self.after, self.TickSize, self.TickValue)
+                ai,fi,pi = None,None,None
+                if actual is not None : ai, fi, pi = actual[i], forecast[i], previous[i]
+                o = ComputeOHLC.calc(tickdf, date, self.before, self.after, self.TickSize, self.TickValue, ai, fi, pi)
+                self.dd.update(o, p, event)
 
-def RunEvent(dataDir, ann, event, symbol, before, after, outdir, pre) :
-    eventdf = ann[ann["event"]==event] if event is not None else None
-    if len(eventdf) == 0 : print("no data for event %s" % event)
-    else:
-        print("Running Event %s" % event)
-        EvalDates(dataDir, eventdf.dt.values, event, symbol, before, after, outdir, pre)
+    def todf(self):
+        return self.dd.todf()
+
+
+    def save(self, outdir):
+        outstr="{}_{}_{}_{}".format(self.symbol, self.pre, self.before, self.after)
+        outfile = os.path.join(outdir, "{}.{}".format(outstr, "csv"))
+        if self.dd.df is None: self.dd.todf()
+        df = self.dd.df
+        df.to_csv(outfile, index=False)
+        self.outfile=outfile
+        return self.outfile
 
 if __name__ == "__main__":
     # Note the CME Futures Data Timestamps are in Central Time
@@ -74,16 +105,26 @@ if __name__ == "__main__":
         for u in uv:
             print(u)
     else:
+        print(dataDir,symbol,before, after,pre)
+        eval=EvalDates(dataDir, symbol, before, after, pre)
         if os.path.exists(event):
-            with open(event) as f :
+            eventFile = event
+            with open(eventFile) as f :
                 for line in f:
                     line=line.strip()
                     if len(line) == 0 : continue
-                    e = line.split(",")[0].strip()
-                    # some 
-                    if len(e.split("/")) > 1 : continue #event names with / cause problemes
-                    RunEvent(dataDir, ann, e, symbol, before, after, outdir, pre)
+                    event = line.split(",")[0].strip()
+                    if len(event.split("/")) > 1 : continue #event names with / cause problemes
+                    eventdf = ann[ann["event"]==event]
+                    if len(eventdf) > 0:
+                        print("running %s n=%d" % (event, len(eventdf)))
+                        eval.run(event, eventdf.dt.values, eventdf.actual.values, eventdf.forecast.values, eventdf.previous.values)
         else:
-            RunEvent(dataDir, ann, event, symbol, before, after, outdir, pre)
+            eventdf = ann[ann["event"]==event]
+            if len(eventdf) > 0:
+                print("running %s n=%d" % (event, len(eventdf)))
+                eval.run(event, eventdf.dt.values, eventdf.actual.values, eventdf.forecast.values, eventdf.previous.values)
+        outfile=eval.save(outdir)
+        print("file saved to %s" % outfile)
 
     
