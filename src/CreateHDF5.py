@@ -21,12 +21,22 @@ class ToHDF5:
         if infile.split(".")[-1] == "h5":
             print("ignoring file: %s already in h5 format" % infile)
             return
-        df = pd.read_csv(infile, 
-                         usecols=self.usecols,
-                         header=None, 
-                         names=self.names,
-                         dtype=self.dtypes,
-                         sep=",")
+        base, ext = os.path.splitext(infile)
+        if ext == "zip":
+            df = pd.read_csv(infile, 
+                             usecols=self.usecols,
+                             header=None, 
+                             compression='zip',
+                             names=self.names,
+                             dtype=self.dtypes,
+                             sep=",")
+        else:
+            df = pd.read_csv(infile, 
+                             usecols=self.usecols,
+                             header=None, 
+                             names=self.names,
+                             dtype=self.dtypes,
+                             sep=",")
         df['dt'] = df['date'] + " " + df['time']
         df=df.drop(['date','time'], axis=1)
         df['dt'] = pd.to_datetime(df['dt'],format="%m/%d/%Y %H:%M:%S.%f")
@@ -36,7 +46,8 @@ class ToHDF5:
         return outfiles
 
     def getSymbol(infile):
-        return os.path.basename(infile).split("_")[0]
+        base, ext = os.path.splitext(infile)
+        return os.path.basename(base).split("_")[0]
 
     def splitFile(self, infile, outdir, lines, forceWrite=True):
         df = pd.read_hdf(infile, 'table')
