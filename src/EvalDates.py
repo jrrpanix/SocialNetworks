@@ -38,7 +38,9 @@ class EvalDates:
 
 def RunEvent(dataDir, ann, event, symbol, before, after, outdir) :
     eventdf = ann[ann["event"]==event] if event is not None else None
-    EvalDates(dataDir, eventdf.dt.values, event, symbol, before, after, outdir)
+    if len(eventdf) == 0 : print("no data for event %s" % event)
+    else:
+        EvalDates(dataDir, eventdf.dt.values, event, symbol, before, after, outdir)
 
 if __name__ == "__main__":
     # Note the CME Futures Data Timestamps are in Central Time
@@ -60,7 +62,6 @@ if __name__ == "__main__":
     assert os.path.exists(inputs), "announcement file %s does not exist" % inputs
     assert os.path.exists(outdir), "output directory %s does not exist" % outdir
     ann=pd.read_hdf(args.inputs, 'table')
-    #eventdf = ann[ann["event"]==event] if event is not None else None
     if args.list :
         uv = sorted(ann.event.unique())
         for u in uv:
