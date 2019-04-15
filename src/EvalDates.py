@@ -40,6 +40,7 @@ def RunEvent(dataDir, ann, event, symbol, before, after, outdir) :
     eventdf = ann[ann["event"]==event] if event is not None else None
     if len(eventdf) == 0 : print("no data for event %s" % event)
     else:
+        print("Running Event %s" % event)
         EvalDates(dataDir, eventdf.dt.values, event, symbol, before, after, outdir)
 
 if __name__ == "__main__":
@@ -69,7 +70,12 @@ if __name__ == "__main__":
     else:
         if os.path.exists(event):
             with open(event) as f :
-                for e in event:
+                for line in f:
+                    line=line.strip()
+                    if len(line) == 0 : continue
+                    e = line.split(",")[0].strip()
+                    # some 
+                    if len(e.split("/")) > 1 : continue #event names with / cause problemes
                     RunEvent(dataDir, ann, e, symbol, before, after, outdir)
         else:
             RunEvent(dataDir, ann, event, symbol, before, after, outdir)
