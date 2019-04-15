@@ -58,10 +58,10 @@ if __name__ == "__main__":
     parser.add_argument('--dataDir', help='specify tick data directory', default= os.path.join(os.getenv("HOME"),"TickData/splits"))
     parser.add_argument('--title', default=None)
     parser.add_argument('-s','--symbol', help='symbol ', default="ES")
-    parser.add_argument('-d','--date', help='date ')
+    parser.add_argument('-d','--date', help='date of event yyyymmdd')
     parser.add_argument('-c','--contracts', help='number of contracts ', type=float, default=100.0)
-    parser.add_argument('-t','--time', help='time ')
-    parser.add_argument('-u','--units', help='units to measure in (default, ticks-t, dollars-d)', default=None)
+    parser.add_argument('-t','--time', help='time of event hhmmss')
+    parser.add_argument('-u','--units', help='units to measure in (default, ticks, dollars)', default=None)
     parser.add_argument('-w','--window', help='before window minutes ', default=120, type=int)
     args = parser.parse_args()
 
