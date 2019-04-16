@@ -88,7 +88,7 @@ if __name__ == "__main__":
     parser.add_argument('-a','--after', help='after window seconds', default=60*10, type=int)
     parser.add_argument('-p','--pre', help='pre time return', default=60*60, type=int)
     parser.add_argument('-o','--outdir', help='output dir', default=None)
-    parser.add_argument('-i','--inputs', help='input file of dates', default="../data/dailyfx.h5")
+    parser.add_argument('-i','--inputs', help='input file of dates', default="../data/cleaned_events.h5")
     parser.add_argument('-e','--event', help="event or file of eventsnames", default=None)
     parser.add_argument('--start', help='start date', default=None)
     parser.add_argument('--end', help='end date', default=None)
