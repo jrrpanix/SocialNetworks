@@ -1,0 +1,13 @@
+grep -i High announcements-dailyfx.csv | grep USD > usd_events.csv
+grep Consumer usd_events.csv | grep Price | grep Index | grep YoY  | grep -v Food
+grep FOMC usd_events.csv | grep -v Upper | grep -v Yellen | grep -v Powell > fomc.csv 
+grep -i farm usd_events.csv > nfp.csv
+grep -i durable usd_events.csv > durable.csv
+grep ISM usd_events.csv | grep -v "Non-" | grep -v "Emp" > ism_manufacturing.csv
+grep ISM usd_events.csv | grep "Non-" > ism_nonmanu.csv
+grep Gr usd_events.csv > gdp.csv
+grep -i confi usd_events.csv | grep -v -i mich > 
+
+
+
+
