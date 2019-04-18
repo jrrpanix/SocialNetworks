@@ -4,43 +4,53 @@ import argparse
 import os
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import LinearRegression
+from sklearn.svm import LinearSVC
 from sklearn.metrics import r2_score
 from sklearn.metrics import accuracy_score
+
 import matplotlib.pyplot as plt
 from scipy import stats
+
+"""
+  Determine if the pre-event price movement is a predictor of event 
+  price movement.  
+
+"""
 
 
 class Estimates:
 
-    def __init__(self, event, N, r2, acc, cr, s):
+    def __init__(self, event, N, r2, acc, acc_svm, cr, s):
         self.event = event
         self.N = N   # number of obs
         self.r2 = r2 # r squared
         self.acc = acc # accuracy logistic regression
+        self.acc_svm = acc_svm # accuracy logistic regression
         self.cr = cr # correlation coeff
         self.s = s # std dev of response
 
-def Fit(X, y, logistic= True):
-    model = LogisticRegression() if logistic == True else LinearRegression()
-    yf = np.where(y > 0 , 1, 0) if logistic == True else y
+def Fit(X, y, model, scoreF, classification= True):
+    yf = np.where(y > 0 , 1, 0) if classification == True else y
     model.fit(X, yf)
     yH = model.predict(X)
-    score = r2_score(yf, yH) if logistic == False else accuracy_score(yf, yH)
+    score = scoreF(yf, yH)
     return score
 
 def PredictPreMovement(df, event):
     ef = df[df["event"] == event]
     X = ef["pre_R"].values.reshape(-1,1)
-    o = ef["O"].values.reshape(-1,1)
-    c = ef["C"].values.reshape(-1,1)
+    o = ef["O"].values
+    c = ef["C"].values
     y = (c-o)/o
     
-    r2 = Fit(X,y, logistic=False)
-    acc = Fit(X,y, logistic=True)
-    cr = stats.pearsonr(X, y)[0]
+    
+    r2 = Fit(X,y, model=LinearRegression(), scoreF=r2_score, classification=False)
+    acc = Fit(X,y, model=LogisticRegression(solver='lbfgs'), scoreF=accuracy_score, classification=True)
+    acc_svm = Fit(X,y, model=LinearSVC(), scoreF=accuracy_score, classification=True)
+    cr = stats.pearsonr(X, y.reshape(-1,1))[0]
     sy = np.std(y)
     sx = np.std(X)
-    return Estimates(event, len(y), r2, acc, cr, sy/sx)
+    return Estimates(event, len(y), r2, acc, acc_svm, cr, sy/sx)
 
 if __name__ == '__main__':
     defaultResultFiles=["../results/ES_3600_60_600.csv",
@@ -52,13 +62,13 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     inFiles = args.input
-    print("instrument,event,n,cr,r2,acc,std")
+    print("instrument,event,n,cr,r2,acc,acc_svm,std")
     for infile in inFiles:
         df = pd.read_csv(infile)
         eventV = sorted(df.event.unique())
         instr = os.path.basename(infile.split("_")[0])
         for i in range(len(eventV)):
             e = PredictPreMovement(df, eventV[i])
-            print("%s,%s,%d,%f,%f,%f,%f" % (instr, e.event, e.N, e.cr, e.r2, e.acc, e.s))
+            print("%s,%s,%d,%f,%f,%f,%f,%f" % (instr, e.event, e.N, e.cr, e.r2, e.acc, e.acc_svm, e.s))
 
 
