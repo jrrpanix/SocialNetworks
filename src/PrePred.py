@@ -12,12 +12,13 @@ from scipy import stats
 
 class Estimates:
 
-    def __init__(self, event, N, r2, acc, cr):
+    def __init__(self, event, N, r2, acc, cr, s):
         self.event = event
         self.N = N   # number of obs
         self.r2 = r2 # r squared
         self.acc = acc # accuracy logistic regression
-        self.cr = cr[0]
+        self.cr = cr # correlation coeff
+        self.s = s # std dev of response
 
 def Fit(X, y, logistic= True):
     model = LogisticRegression() if logistic == True else LinearRegression()
@@ -36,8 +37,10 @@ def PredictPreMovement(df, event):
     
     r2 = Fit(X,y, logistic=False)
     acc = Fit(X,y, logistic=True)
-    cr = stats.pearsonr(X, y)
-    return Estimates(event, len(y), r2, acc, cr)
+    cr = stats.pearsonr(X, y)[0]
+    sy = np.std(y)
+    sx = np.std(X)
+    return Estimates(event, len(y), r2, acc, cr, sy/sx)
 
 if __name__ == '__main__':
     defaultResultFiles=["../results/ES_3600_60_600.csv",
@@ -49,13 +52,13 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     inFiles = args.input
-    print("instrument,event,n,cr,r2,acc")
+    print("instrument,event,n,cr,r2,acc,std")
     for infile in inFiles:
         df = pd.read_csv(infile)
         eventV = sorted(df.event.unique())
         instr = os.path.basename(infile.split("_")[0])
         for i in range(len(eventV)):
             e = PredictPreMovement(df, eventV[i])
-            print("%s,%s,%d,%f,%f,%f" % (instr, e.event, e.N, e.cr, e.r2, e.acc))
+            print("%s,%s,%d,%f,%f,%f,%f" % (instr, e.event, e.N, e.cr, e.r2, e.acc, e.s))
 
 
