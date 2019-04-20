@@ -18,7 +18,7 @@ def load():
     n = ['Event',
          'EventMaxTicks',
          'EventTickMean',
-         'count',
+         'N',
          'preT_max',
          'NonEventTickMean',
          'R_std',
@@ -38,6 +38,7 @@ def load():
         fix(df, s.upper(),T)
         #df = df[["Symbol","Event","TickR","StdR","VolumeR","TickMaxR","PreMarket$","EventMarket$","$Ratio"]]
         df = df[["Symbol","Event",
+                 "N",
                  "EventMaxTicks",
                  "EventTickMean","NonEventTickMean",
                  "TickR","StdR","VolumeR","TickMaxR"
