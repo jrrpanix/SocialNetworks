@@ -47,7 +47,10 @@ class ToHDF5:
 
     def getSymbol(infile):
         base, ext = os.path.splitext(infile)
-        return os.path.basename(base).split("_")[0]
+        sym=os.path.basename(base).split("_")[0]
+        if len(sym) > 4:
+            return sym[0:2]
+        return sym
 
     def splitFile(self, infile, outdir, lines, forceWrite=True):
         df = pd.read_hdf(infile, 'table')
