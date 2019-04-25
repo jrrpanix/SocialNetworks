@@ -33,6 +33,8 @@ class Estimates:
 def runFits(X, y, event=None):
     def Fit(X, y, model, scoreF, classification= True):
         yf = np.where(y > 0 , 1, 0) if classification == True else y
+        #print(np.sum(yf), len(yf))
+        if np.sum(yf) == len(yf) or np.sum(yf) == 0: return 0
         model.fit(X, yf)
         yH = model.predict(X)
         score = scoreF(yf, yH)
@@ -57,16 +59,38 @@ def RunPreMove(inFiles):
     print("instrument,event,n,cr,r2,acc,acc_svm,std")
     for infile in inFiles:
         df = pd.read_csv(infile)
+        df["post_R"] = postEventReturn(df)
         eventV = sorted(df.event.unique())
         instr = os.path.basename(infile.split("_")[0])
+        #print(df.columns)
+        allCount, sCount = 0, 0
         for i in range(len(eventV)):
             event = eventV[i]
             ef = df[df["event"] == event]
             X = ef["pre_R"].values.reshape(-1,1)
-            y = postEventReturn(ef)
+            y = ef["post_R"].values
+            meanP = abs(np.mean(X))
             e = runFits(X, y, event)
-            print("%s,%s,%d,%f,%f,%f,%f,%f" % (instr, e.event, e.N, e.cr, e.r2, e.acc, e.acc_svm, e.s))
-    
+            if e.acc_svm > 0.6:
+                allCount += 1
+                print("%d,%s,%s,%d,%f,%f,%f,%f,%f,%f,%s" % (allCount,instr, e.event, e.N, e.cr, e.r2, e.acc, e.acc_svm, e.s, meanP, "ALL-MOVES"))
+        print("")
+        for i in range(len(eventV)):
+            event = eventV[i]
+            ef = df[df["event"] == event]
+            big_T = ef["T"].mean()  + ef["T"].std()
+            ef = ef[ef["T"] > big_T]
+            X = ef["pre_R"].values.reshape(-1,1)
+            y = ef["post_R"].values
+            meanP = abs(np.mean(X))
+            if len(y) == 0 :
+                continue
+
+            e = runFits(X, y, event)
+            if e.acc_svm > .6:
+                sCount +=1 
+                print("%d,%s,%s,%d,%f,%f,%f,%f,%f,%f,%s" % (sCount, instr, e.event, e.N, e.cr, e.r2, e.acc, e.acc_svm, e.s, meanP, "1-STD-MOVE"))
+        print("")
 
 
 if __name__ == '__main__':
