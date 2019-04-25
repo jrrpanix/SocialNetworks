@@ -29,21 +29,15 @@ class Estimates:
         self.cr = cr # correlation coeff
         self.s = s # std dev of response
 
-def Fit(X, y, model, scoreF, classification= True):
-    yf = np.where(y > 0 , 1, 0) if classification == True else y
-    model.fit(X, yf)
-    yH = model.predict(X)
-    score = scoreF(yf, yH)
-    return score
 
-def PredictPreMovement(df, event):
-    ef = df[df["event"] == event]
-    X = ef["pre_R"].values.reshape(-1,1)
-    o = ef["O"].values
-    c = ef["C"].values
-    y = (c-o)/o
-    
-    
+def runFits(X, y, event=None):
+    def Fit(X, y, model, scoreF, classification= True):
+        yf = np.where(y > 0 , 1, 0) if classification == True else y
+        model.fit(X, yf)
+        yH = model.predict(X)
+        score = scoreF(yf, yH)
+        return score
+
     r2 = Fit(X,y, model=LinearRegression(), scoreF=r2_score, classification=False)
     acc = Fit(X,y, model=LogisticRegression(solver='lbfgs'), scoreF=accuracy_score, classification=True)
     acc_svm = Fit(X,y, model=LinearSVC(), scoreF=accuracy_score, classification=True)
@@ -52,15 +46,13 @@ def PredictPreMovement(df, event):
     sx = np.std(X)
     return Estimates(event, len(y), r2, acc, acc_svm, cr, sy/sx)
 
-if __name__ == '__main__':
-    defaultResultFiles=["../results/ES_3600_60_600.csv",
-                        "../results/TU_3600_60_600.csv",
-                        "../results/UB_3600_60_600.csv"]
-
-    parser = argparse.ArgumentParser(description='SocialNetworks CSV to HDF5')
-    parser.add_argument('-i', '--input', nargs='+', default = defaultResultFiles)
-    args = parser.parse_args()
-
+def postEventReturn(ef):
+    o = ef["O"].values
+    c = ef["C"].values
+    y = (c-o)/o
+    return y
+ 
+def RunPreMove(inFiles):
     inFiles = args.input
     print("instrument,event,n,cr,r2,acc,acc_svm,std")
     for infile in inFiles:
@@ -68,7 +60,23 @@ if __name__ == '__main__':
         eventV = sorted(df.event.unique())
         instr = os.path.basename(infile.split("_")[0])
         for i in range(len(eventV)):
-            e = PredictPreMovement(df, eventV[i])
+            event = eventV[i]
+            ef = df[df["event"] == event]
+            X = ef["pre_R"].values.reshape(-1,1)
+            y = postEventReturn(ef)
+            e = runFits(X, y, event)
             print("%s,%s,%d,%f,%f,%f,%f,%f" % (instr, e.event, e.N, e.cr, e.r2, e.acc, e.acc_svm, e.s))
+    
+
+
+if __name__ == '__main__':
+    defaultResultFiles=["../results/ES_3600_60_600.csv","../results/TU_3600_60_600.csv","../results/UB_3600_60_600.csv"]
+    parser = argparse.ArgumentParser(description='SocialNetworks CSV to HDF5')
+    parser.add_argument('-i', '--input', nargs='+', default = defaultResultFiles)
+    parser.add_argument('--model', default = "pre")
+    args = parser.parse_args()
+    if args.model == "pre":
+        RunPreMove(args.input)
+    
 
 
