@@ -20,7 +20,8 @@ from scipy import stats
 
 class Estimates:
 
-    def __init__(self, event, N, r2, acc, acc_svm, cr, s):
+    def __init__(self, instr, event, N, r2, acc, acc_svm, cr, s, meanX, label):
+        self.instr = instr
         self.event = event
         self.N = N   # number of obs
         self.r2 = r2 # r squared
@@ -28,12 +29,13 @@ class Estimates:
         self.acc_svm = acc_svm # accuracy logistic regression
         self.cr = cr # correlation coeff
         self.s = s # std dev of response
+        self.meanX = np.abs(meanX)
+        self.label = label
 
 
-def runFits(X, y, event=None):
+def runFits(X, y, event, instr, label):
     def Fit(X, y, model, scoreF, classification= True):
         yf = np.where(y > 0 , 1, 0) if classification == True else y
-        #print(np.sum(yf), len(yf))
         if np.sum(yf) == len(yf) or np.sum(yf) == 0: return 0
         model.fit(X, yf)
         yH = model.predict(X)
@@ -46,7 +48,7 @@ def runFits(X, y, event=None):
     cr = stats.pearsonr(X, y.reshape(-1,1))[0]
     sy = np.std(y)
     sx = np.std(X)
-    return Estimates(event, len(y), r2, acc, acc_svm, cr, sy/sx)
+    return Estimates(instr, event, len(y), r2, acc, acc_svm, cr, sy/sx, np.mean(X), label)
 
 def postEventReturn(ef):
     o = ef["O"].values
@@ -56,41 +58,31 @@ def postEventReturn(ef):
  
 def RunPreMove(inFiles):
     inFiles = args.input
-    print("instrument,event,n,cr,r2,acc,acc_svm,std")
+    print("%-3s, %-25s, %9s, %7s, %7s, %4s, %4s, %7s, %7s" % 
+          ("I", "EVENT", "pR:1s/as", "acc1sd","accall","n1sd","nall", "r21sd", "r2all"))
     for infile in inFiles:
         df = pd.read_csv(infile)
         df["post_R"] = postEventReturn(df)
         eventV = sorted(df.event.unique())
         instr = os.path.basename(infile.split("_")[0])
-        #print(df.columns)
         allCount, sCount = 0, 0
         for i in range(len(eventV)):
             event = eventV[i]
             ef = df[df["event"] == event]
             X = ef["pre_R"].values.reshape(-1,1)
             y = ef["post_R"].values
-            meanP = abs(np.mean(X))
-            e = runFits(X, y, event)
-            if e.acc_svm > 0.6:
-                allCount += 1
-                print("%d,%s,%s,%d,%f,%f,%f,%f,%f,%f,%s" % (allCount,instr, e.event, e.N, e.cr, e.r2, e.acc, e.acc_svm, e.s, meanP, "ALL-MOVES"))
-        print("")
-        for i in range(len(eventV)):
-            event = eventV[i]
-            ef = df[df["event"] == event]
+            eAll = runFits(X, y, event, instr, "ALL-MOVES")
+
             big_T = ef["T"].mean()  + ef["T"].std()
             ef = ef[ef["T"] > big_T]
             X = ef["pre_R"].values.reshape(-1,1)
             y = ef["post_R"].values
-            meanP = abs(np.mean(X))
-            if len(y) == 0 :
-                continue
+            e1Std = runFits(X, y, event, instr, "1STD-MOVES")
+            ratio = e1Std.meanX / eAll.meanX
+            if e1Std.acc_svm > .1:
+                print("%-3s, %-25s, %9.2f, %7.5f, %7.5f, %4d, %4d, %7.5f, %7.5f" % 
+                      (instr, event, ratio, e1Std.acc_svm, eAll.acc_svm, e1Std.N, eAll.N, e1Std.r2, eAll.r2))
 
-            e = runFits(X, y, event)
-            if e.acc_svm > .6:
-                sCount +=1 
-                print("%d,%s,%s,%d,%f,%f,%f,%f,%f,%f,%s" % (sCount, instr, e.event, e.N, e.cr, e.r2, e.acc, e.acc_svm, e.s, meanP, "1-STD-MOVE"))
-        print("")
 
 
 if __name__ == '__main__':
