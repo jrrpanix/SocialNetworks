@@ -6,6 +6,8 @@ import sys
 import argparse
 import math
 from pytz import timezone
+import bisect
+from Utils import Utils
 
 #TZ_Central = timezone("US/Central")
 
@@ -13,6 +15,28 @@ from pytz import timezone
  This code attempts to filter down the announcements
  to the basic core.
 """
+
+class Events:
+
+    def __init__(self, h5_file='../data/cleaned_events.h5'):
+        self.df = pd.read_hdf(h5_file, 'table')
+        
+    def getEvents(self):
+        return self.df.event.unique()
+
+    def getEventInfo(self, event, dt):
+        f = self.df[self.df["event"] == event]
+        datesV = f.dt.values
+        ib = bisect.bisect_right(datesV, np.datetime64(dt))
+        if ib <= len(datesV):
+            r=f.iloc[ib]
+            return {'date':Utils.todt(r["dt"]),
+                    'event':r["event"],
+                    'previous':r["previous"],
+                    'forecast':r["forecast"],
+                    'actual':r["actual"]}
+        else :
+            return None
 
 class EventFilter:
 
