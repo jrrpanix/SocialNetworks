@@ -63,7 +63,13 @@ def PlotTickData(dt, df, symbol, window, title_prefix=None, dfmt='%H:%M:%S', uni
 
 """
 """
-def PlotEvent(event, approximateDate, symbol, window,  edf, reader, units, contracts):
+def PlotEvent(event, approximateDate, symbol, window,  edf, reader, units=None, contracts=100):
+    dt = approximateDate
+    if type(dt) == str:
+        dstr = dt + " 000000" if len(dt) == 8 else dt
+        dt = Utils.dt(dstr, 3)
+        approximateDate = dt
+
     info = edf.getEventInfo(event, approximateDate)
     if info is None:
         print("unable to find {} for date".format(event, str(approximateDate)))
