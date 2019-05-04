@@ -19,7 +19,7 @@ def GetValueBefore(df, dt, tag="price"):
         return df.iloc[ib-1][tag]
     return None
 
-def PlotTickData(dt, df, symbol, window, title_prefix=None, dfmt='%H:%M:%S', units=None, before_seconds=15, contracts=100, title2=None):
+def PlotTickData(dt, df, symbol, window, title_prefix=None, dfmt='%H:%M:%S', units=None, before_seconds=15, contracts=100, title2=None, output=None):
     before = dt - datetime.timedelta(minutes=window)
     after = dt + datetime.timedelta(minutes=window)
     title = symbol + " " + dt.strftime("%m-%d-%Y")
@@ -59,11 +59,17 @@ def PlotTickData(dt, df, symbol, window, title_prefix=None, dfmt='%H:%M:%S', uni
         plt.ylabel("Price")
     ax.xaxis.set_major_formatter(DateFormatter(dfmt))
     plt.xlabel("Time")
-    plt.show()
+    if output is not None:
+        f, ext = os.path.splitext(output)
+        if len(ext) == 0 :
+            output = "{}.pdf".format(output)
+        plt.savefig(output, bbox_inches="tight")
+    else:
+        plt.show()
 
 """
 """
-def PlotEvent(event, approximateDate, symbol, window,  edf, reader, units=None, contracts=100):
+def PlotEvent(event, approximateDate, symbol, window,  edf, reader, units=None, contracts=100, output=None):
     dt = approximateDate
     if type(dt) == str:
         dstr = dt + " 000000" if len(dt) == 8 else dt
@@ -71,13 +77,14 @@ def PlotEvent(event, approximateDate, symbol, window,  edf, reader, units=None, 
         approximateDate = dt
 
     info = edf.getEventInfo(event, approximateDate)
+    print(info)
     if info is None:
         print("unable to find {} for date".format(event, str(approximateDate)))
         return
     df = reader.readh5(symbol, info['date'])
     title = info['event']
     title2 = "Forecast={} : Actual={} : Previous={}".format(info['forecast'], info['actual'], info['previous'])
-    PlotTickData(info['date'], df, symbol, window, title, units=units, contracts=contracts, title2=title2)
+    PlotTickData(info['date'], df, symbol, window, title, units=units, contracts=contracts, title2=title2, output=output)
     
 
 def GetEvents(df):
@@ -105,6 +112,7 @@ if __name__ == "__main__":
     parser.add_argument('-u','--units', help='units to measure in (default, ticks, dollars)', default=None)
     parser.add_argument('-w','--window', help='before window minutes ', default=120, type=int)
     parser.add_argument('-e','--event', default=None)
+    parser.add_argument('-o','--output', default=None)
     args = parser.parse_args()
 
     assert args.date is not None
@@ -115,12 +123,12 @@ if __name__ == "__main__":
     if args.event is not None:
         event = args.event.replace("_"," ")
         ef = Events()
-        PlotEvent(event, dt, args.symbol, args.window, ef, reader, units=args.units, contracts=args.contracts)
+        PlotEvent(event, dt, args.symbol, args.window, ef, reader, units=args.units, contracts=args.contracts, output=args.output)
         #ef = Events()
         #dt, e  = datetime.datetime(2019,1,1), "Non-farm Payrolls"
         #print(ef.getEventInfo(e, dt))
     else:
         df = reader.readh5(args.symbol, dt)
-        PlotTickData(dt, df, args.symbol, args.window, "NFP", units=args.units, contracts=args.contracts)
+        PlotTickData(dt, df, args.symbol, args.window, "NFP", units=args.units, contracts=args.contracts, output=args.output)
 
 
