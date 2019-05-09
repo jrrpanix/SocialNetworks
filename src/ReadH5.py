@@ -14,6 +14,7 @@ class ReadH5 :
         self.tz = pytz.timezone(timeZone)
         self.reportNoData = reportNoData
         self.df = None
+        self.symbol = None
 
     def findFile(self, symbol, date):
         for f in os.listdir(self.dataDir):
@@ -28,8 +29,9 @@ class ReadH5 :
     def readh5(self, symbol, date):
         if self.df is not None:
             date = Utils.todt(date)
-            if date > self.start_date and date < self.end_date :
-                return self.df
+            if self.symbol == symbol:
+                if date > self.start_date and date < self.end_date :
+                    return self.df
         fname = self.findFile(symbol, date)
         if fname is None:
             self.df = None
@@ -39,6 +41,7 @@ class ReadH5 :
         t0 = time.time()
         self.df =pd.read_hdf(os.path.join(self.dataDir, fname), 'table')
         self.start_date, self.end_date = self.df['dt'].min(), self.df['dt'].max()
+        self.symbol= symbol
         t1 = time.time()
         if self.reportNoData :
             print("reading time for %s %f" % (fname, (t1-t0)))
