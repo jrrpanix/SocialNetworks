@@ -129,6 +129,6 @@ if __name__ == "__main__":
         #print(ef.getEventInfo(e, dt))
     else:
         df = reader.readh5(args.symbol, dt)
-        PlotTickData(dt, df, args.symbol, args.window, "NFP", units=args.units, contracts=args.contracts, output=args.output)
+        PlotTickData(dt, df, args.symbol, args.window, args.title, units=args.units, contracts=args.contracts, output=args.output)
 
 
